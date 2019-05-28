@@ -117,3 +117,6 @@ buildNumber.properties
 */Makefile
 */cmake_install.cmake
 .DS_Store
+
+.idea/
+image_test.iml
