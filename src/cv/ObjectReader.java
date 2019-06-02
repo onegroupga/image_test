@@ -27,7 +27,7 @@ import static org.bytedeco.opencv.global.opencv_imgproc.*;
 
 
 import org.bytedeco.opencv.opencv_core.*;
-import org.bytedeco.opencv.opencv_imgproc.*;
+
 import static org.bytedeco.opencv.global.opencv_core.*;
 import static org.bytedeco.opencv.global.opencv_imgcodecs.*;
 
@@ -51,8 +51,7 @@ public class ObjectReader implements Runnable {
 	private Vec4iVector Line_set = new Vec4iVector();
 	private  Vec3fVector Circle_set = new Vec3fVector();
 	private int Camera_id;
-	private Mat picture_global;
-	private Mat layer_global;
+	private  Mat picture_global = new Mat() , picture_plain = new Mat();
 	private Mat edges_global;
 	boolean vid;
 	
@@ -155,8 +154,9 @@ public class ObjectReader implements Runnable {
 	private void extract_layer()
 	{
 		int i;
+
+		Mat picture = get_pic();
 		BytePointer dat;
-		Mat picture =  get_pic();
 
 		cvtColor(picture, picture, COLOR_BGR2HSV);
 		dat = picture.data();
@@ -166,19 +166,36 @@ public class ObjectReader implements Runnable {
 			dat = dat.put(0 + i , (byte) dat.get(i+2));
 			dat = dat.put(1 + i  , (byte) dat.get(i+2));
 		}
-		picture = picture.data(dat);
+		//picture = picture.data(dat);
 
 		cvtColor(picture, picture, COLOR_BGR2GRAY);
-
-		update_layer(picture);
+		picture_plain = picture_global.clone();
+		cvtColor(picture, picture, COLOR_GRAY2BGR);
 	}
 
 	private void extract_circles(int resolution_ratio,int min_distance,int Canny_threshold,int Center_threshold,int min_rad, int max_rad)
 	{
+
 		Vec3fVector circle = new Vec3fVector();
-		HoughCircles(get_layer(), circle , CV_HOUGH_GRADIENT, resolution_ratio,min_distance, Canny_threshold, Center_threshold, min_rad,max_rad);
+		HoughCircles(get_plain(), circle , CV_HOUGH_GRADIENT, resolution_ratio,min_distance, Canny_threshold, Center_threshold, min_rad,max_rad);
 		toVec(circle);
+		create_nodes();
 		draw_circles(true);
+
+
+	}
+
+	private void extract_lines(){
+
+		Vec4iVector lines = new Vec4iVector();
+		Mat blurred = new Mat(),edges = new Mat() ;
+		blur(get_plain(),blurred  , new Size(3,3));
+		Canny(blurred,edges, 50, 100);
+		HoughLinesP(edges, lines, 1, CV_PI/180, 30, 0, 200);
+		to_lineVec(lines);
+		draw_lines();
+
+
 
 	}
 
@@ -211,14 +228,14 @@ public class ObjectReader implements Runnable {
 	{
 		return picture_global;
 	}
+	public synchronized Mat get_plain()
+	{
+		return picture_plain;
+	}
 	
 	public synchronized Mat get_edges()
 	{
 		return edges_global;
-	}
-	public synchronized Mat get_layer()
-	{
-		return layer_global;
 	}
 	
 /*	private void calculate_nodes()
@@ -296,11 +313,15 @@ public class ObjectReader implements Runnable {
 	{
 		picture_global = img;
 	}
-	private synchronized void update_layer(Mat img)
+
+	private void Generate_Objects()
 	{
-		layer_global = img;
+		extract_layer();
+		extract_lines();
+		extract_circles(1,3,120,15,2,10);
+
+
 	}
-	
 	
 
 
@@ -318,18 +339,21 @@ public class ObjectReader implements Runnable {
 			}
 	        while(vid) {
 	        		update_image(converter.convert(grabber.grab()));
-            		extract_circles(1,50,120,80,50,100);
+            		//extract_circles(1,50,120,80,50,100);
             		extract_layer();
             		vid_frame.showImage(converter.convert(get_pic()));
             		vid_edges.showImage(converter.convert(get_edges()));
 	        			}
 	        if(!vid)
 	        {
-	        	//extract_circles(1,3,120,15,2,10);
+
 				extract_layer();
+				extract_lines();
+				extract_circles(1,3,120,15,2,10);
+
 				//extract_circles(1,50,120,80,50,100);
-	        	vid_frame.showImage(converter.convert(get_layer()));
-	        	vid_edges.showImage(converter.convert(get_pic()));
+	        	vid_frame.showImage(converter.convert(get_pic()));
+	        	vid_edges.showImage(converter.convert(get_plain()));
 	        }
 	        
 	        
