@@ -185,13 +185,13 @@ public class ObjectReader implements Runnable {
 
 	}
 
-	private void extract_lines(){
+	private void extract_lines(double rho,double theta,int threshold, int minLineLength,int maxLineGap,Size filter_dim, int threshold1, int threshold2){
 
 		Vec4iVector lines = new Vec4iVector();
 		Mat blurred = new Mat(),edges = new Mat() ;
-		blur(get_plain(),blurred  , new Size(3,3));
-		Canny(blurred,edges, 50, 100);
-		HoughLinesP(edges, lines, 1, CV_PI/180, 30, 0, 200);
+		blur(get_plain(),blurred  , filter_dim);
+		Canny(blurred,edges, threshold1, threshold2);
+		HoughLinesP(edges, lines,rho, theta, threshold, minLineLength, maxLineGap);
 		to_lineVec(lines);
 		draw_lines();
 
@@ -314,15 +314,29 @@ public class ObjectReader implements Runnable {
 		picture_global = img;
 	}
 
+
+
+
+
+
+
+
+
+
+
+
 	private void Generate_Objects()
 	{
 		extract_layer();
-		extract_lines();
+		//extract_lines( 1, CV_PI/180, 30, 0, 200, new Size(3,3), 50, 100);
+
+		
+
 		extract_circles(1,3,120,15,2,10);
 
 
 	}
-	
+
 
 
 
@@ -347,11 +361,9 @@ public class ObjectReader implements Runnable {
 	        if(!vid)
 	        {
 
-				extract_layer();
-				extract_lines();
-				extract_circles(1,3,120,15,2,10);
+			Generate_Objects();
 
-				//extract_circles(1,50,120,80,50,100);
+				extract_circles(1,50,120,80,50,100);
 	        	vid_frame.showImage(converter.convert(get_pic()));
 	        	vid_edges.showImage(converter.convert(get_plain()));
 	        }
