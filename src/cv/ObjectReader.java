@@ -179,8 +179,6 @@ public class ObjectReader implements Runnable {
 		Vec3fVector circle = new Vec3fVector();
 		HoughCircles(get_plain(), circle , CV_HOUGH_GRADIENT, resolution_ratio,min_distance, Canny_threshold, Center_threshold, min_rad,max_rad);
 		toVec(circle);
-		create_nodes();
-		draw_circles(true);
 
 
 	}
@@ -266,7 +264,7 @@ public class ObjectReader implements Runnable {
 	private synchronized void draw_circles(Boolean centers)
 	{
 		int i;
-		for(i = 0; i < get_vec_len(); i++) {
+		for(i = 0; i < 7; i++) {
 			circle(get_pic(), new Point(get_circle(i,x_circle),get_circle(i,y_circle)),get_circle(i,rad_circle), Scalar.RED);
 				if (centers) {
 					line(get_pic(), new Point(get_circle(i,x_circle)-3,get_circle(i,y_circle)), new Point(get_circle(i,x_circle)+3,get_circle(i,y_circle)), Scalar.BLUE);
@@ -329,13 +327,51 @@ public class ObjectReader implements Runnable {
 	{
 		extract_layer();
 		//extract_lines( 1, CV_PI/180, 30, 0, 200, new Size(3,3), 50, 100);
+        //extract_circles(1,50,120,80,50,100);
 
-		
+		 final int param1 = 3, param2 = 120, param3 = 15, param4 = 2, param5 = 8;
+        int max_change_param1 = 6;
+        int max_change_param2 = 5;
+        int max_change_param3 = 2;
+        int max_change_param4 = 6;
+		int max_change_param5 = 20;
+		int amount_circles = 7;
+        int sec1,sec2=param2,sec3=param3,sec4=param4,sec5=param5;
+        outerloop:
+        do{
+		for(sec1 = param1 /*(param1-max_change)*/;sec1 <= param1+max_change_param1;sec1++ ) {
+            extract_circles(1, sec1, sec2, sec3, sec4, sec5);
+            if (eval(amount_circles)) break outerloop;
+            for (sec2 = (param2 - max_change_param2); sec2 <= param2 + max_change_param2; sec2++) {
+                extract_circles(1, sec1, sec2, sec3, sec4, sec5);
+                if (eval(amount_circles)) break outerloop;
+                for (sec3 = (param3 - max_change_param3); sec3 <= param3 + max_change_param3; sec3++) {
+                    extract_circles(1, sec1, sec2, sec3, sec4, sec5);
+                    if (eval(amount_circles)) break outerloop;
+                    for (sec4 = (param4); sec4 <= param4 + max_change_param4; sec4++) {
+                        extract_circles(1, sec1, sec2, sec3, sec4, sec5);
+                        if (eval(amount_circles)) break outerloop;
+                        for (sec5 = (param5); sec5 <= param5 + max_change_param5; sec5++) {
+                            extract_circles(1, sec1, sec2, sec3, sec4, sec5);
+                            if (eval(amount_circles)) break outerloop;
+                        }
+                    }
+                }
+            }
 
-		extract_circles(1,3,120,15,2,10);
-
-
+        }}while(!eval(amount_circles));
+		draw_circles(true);
+		create_nodes();
+        System.out.println(  "amount of circles = "+ get_vec_len());
 	}
+
+
+
+	private boolean eval(int amount)
+    {
+        if(get_vec_len() == amount) return true;
+        return false;
+    }
 
 
 
@@ -363,7 +399,10 @@ public class ObjectReader implements Runnable {
 
 			Generate_Objects();
 
-				extract_circles(1,50,120,80,50,100);
+
+
+
+				//extract_circles(1,50,120,80,50,100);
 	        	vid_frame.showImage(converter.convert(get_pic()));
 	        	vid_edges.showImage(converter.convert(get_plain()));
 	        }
