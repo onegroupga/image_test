@@ -46,8 +46,8 @@ public class ObjectReader implements Runnable {
 	public static final int yend_line = 3;
 	
 	
-	private CanvasFrame vid_frame = new CanvasFrame("frame1") ;
-	private CanvasFrame vid_edges = new CanvasFrame("edges") ;
+	private CanvasFrame vid_frame = new CanvasFrame("frame1");
+	private CanvasFrame vid_edges = new CanvasFrame("edges");
 	private Vec4iVector Line_set = new Vec4iVector();
 	private  Vec3fVector Circle_set = new Vec3fVector();
 	private int Camera_id;
@@ -114,42 +114,7 @@ public class ObjectReader implements Runnable {
 	 *	max_radius = 0: Maximum radius to be detected. If unknown, put zero as default
 	 *
 	 */
-	private  void s(int resolution_ratio,int min_distance,int Canny_threshold,int Center_threshold,int min_rad, int max_rad)
-	{
-		 int i;
-		 BytePointer dat;
-		 Mat picture = get_pic();
-		 Mat edges = new Mat();
-		 Mat blurred = new Mat();
-		 Vec3fVector circle = new Vec3fVector();
-		 Vec4iVector lines = new Vec4iVector();
-		 cvtColor(picture, picture, COLOR_BGR2HSV);
-	     dat = picture.data();
 
-	     for (i = 0; i < (picture.arrayHeight()*picture.arrayWidth()*3);i += 3)
-	     	{
-	     	 dat = dat.put(0 + i , (byte) dat.get(i+2));
-	     	 dat = dat.put(1 + i  , (byte) dat.get(i+2));
-	     	}
-
-	     picture = picture.data(dat);
-	     cvtColor(picture, picture, COLOR_BGR2GRAY);
-	    blur(picture,blurred  , new Size(3,3));
-	    Canny(blurred,edges, 50, 100);				
-	  	 HoughCircles(picture, circle , CV_HOUGH_GRADIENT, resolution_ratio,min_distance, Canny_threshold, Center_threshold, min_rad,max_rad);
-	  	//cvtColor(edges, edges, COLOR_GRAY2RGB);
-	  	 HoughLinesP(edges, lines, 1, CV_PI/180, 30, 0, 200);
-	  	cvtColor(picture, picture, COLOR_GRAY2RGB);
-
-	 
-	  	 toVec(circle);
-	  	 to_lineVec(lines);
-	  	 update_image(picture,edges);
-	  	 create_nodes();
-	  	 draw_circles(true);
-	  	 draw_lines();
-	 
-	}
 
 	private void extract_layer()
 	{
@@ -329,41 +294,55 @@ public class ObjectReader implements Runnable {
 		//extract_lines( 1, CV_PI/180, 30, 0, 200, new Size(3,3), 50, 100);
         //extract_circles(1,50,120,80,50,100);
 
-		 final int param1 = 3, param2 = 120, param3 = 15, param4 = 2, param5 = 8;
-        int max_change_param1 = 6;
-        int max_change_param2 = 5;
-        int max_change_param3 = 2;
-        int max_change_param4 = 6;
+
+		auto_circle(3,120,15,2,8);
+
+
+
+
+
+
+
+
+	}
+
+
+	private void auto_circle( int param1, int param2, int param3, int param4, int param5){
+		int max_change_param1 = 6;
+		int max_change_param2 = 5;
+		int max_change_param3 = 2;
+		int max_change_param4 = 6;
 		int max_change_param5 = 20;
 		int amount_circles = 7;
-        int sec1,sec2=param2,sec3=param3,sec4=param4,sec5=param5;
-        outerloop:
-        do{
-		for(sec1 = param1 /*(param1-max_change)*/;sec1 <= param1+max_change_param1;sec1++ ) {
-            extract_circles(1, sec1, sec2, sec3, sec4, sec5);
-            if (eval(amount_circles)) break outerloop;
-            for (sec2 = (param2 - max_change_param2); sec2 <= param2 + max_change_param2; sec2++) {
-                extract_circles(1, sec1, sec2, sec3, sec4, sec5);
-                if (eval(amount_circles)) break outerloop;
-                for (sec3 = (param3 - max_change_param3); sec3 <= param3 + max_change_param3; sec3++) {
-                    extract_circles(1, sec1, sec2, sec3, sec4, sec5);
-                    if (eval(amount_circles)) break outerloop;
-                    for (sec4 = (param4); sec4 <= param4 + max_change_param4; sec4++) {
-                        extract_circles(1, sec1, sec2, sec3, sec4, sec5);
-                        if (eval(amount_circles)) break outerloop;
-                        for (sec5 = (param5); sec5 <= param5 + max_change_param5; sec5++) {
-                            extract_circles(1, sec1, sec2, sec3, sec4, sec5);
-                            if (eval(amount_circles)) break outerloop;
-                        }
-                    }
-                }
-            }
 
-        }}while(!eval(amount_circles));
+		int sec1,sec2=param2,sec3=param3,sec4=param4,sec5=param5;
+		outerloop:
+		do{
+			for(sec1 = param1 /*(param1-max_change)*/;sec1 <= param1+max_change_param1;sec1++ ) {
+				extract_circles(1, sec1, sec2, sec3, sec4, sec5);
+				if (eval(amount_circles)) break outerloop;
+				for (sec2 = (param2 - max_change_param2); sec2 <= param2 + max_change_param2; sec2++) {
+					extract_circles(1, sec1, sec2, sec3, sec4, sec5);
+					if (eval(amount_circles)) break outerloop;
+					for (sec3 = (param3 - max_change_param3); sec3 <= param3 + max_change_param3; sec3++) {
+						extract_circles(1, sec1, sec2, sec3, sec4, sec5);
+						if (eval(amount_circles)) break outerloop;
+						for (sec4 = (param4); sec4 <= param4 + max_change_param4; sec4++) {
+							extract_circles(1, sec1, sec2, sec3, sec4, sec5);
+							if (eval(amount_circles)) break outerloop;
+							for (sec5 = (param5); sec5 <= param5 + max_change_param5; sec5++) {
+								extract_circles(1, sec1, sec2, sec3, sec4, sec5);
+								if (eval(amount_circles)) break outerloop;
+							}
+						}
+					}
+				}
+
+			}}while(!eval(amount_circles--));
 		draw_circles(true);
 		create_nodes();
-        System.out.println(  "amount of circles = "+ get_vec_len());
-	}
+
+    }
 
 
 
